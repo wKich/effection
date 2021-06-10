@@ -1,6 +1,5 @@
-import { Operation } from '@effection/core';
+import { Operation, createFuture } from '@effection/core';
 import { EventSource, addListener, removeListener } from './event-source';
-
 
 /**
  * Takes an event source and event name and returns an
@@ -55,11 +54,11 @@ export function once<T = unknown>(source: EventSource, eventName: string): Opera
  * ```
  */
 export function onceEmit<TArgs extends unknown[] = unknown[]>(source: EventSource, eventName: string): Operation<TArgs> {
-  return {
-    perform(resolve) {
-      let listener = (...args: unknown[]) => { resolve(args as TArgs) };
-      addListener(source, eventName, listener);
-      return () => removeListener(source, eventName, listener)
-    }
+  return (task) => {
+    let { future, resolve } = createFuture<TArgs>();
+    let listener = (...args: unknown[]) => { resolve({ state: 'completed', value: args as TArgs }) };
+    addListener(source, eventName, listener);
+    task.consume(() => removeListener(source, eventName, listener));
+    return future;
   }
 }

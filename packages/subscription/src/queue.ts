@@ -1,4 +1,4 @@
-import { Operation } from '@effection/core';
+import { Operation, createFuture } from '@effection/core';
 import { Subscription } from './index';
 
 type Close<T> = (...args: T extends undefined ? [] : [T]) => void;
@@ -43,22 +43,21 @@ export function createQueue<T, TReturn = undefined>(): Queue<T, TReturn> {
     }
   }
 
-  let next = (): Operation<IteratorResult<T, TReturn>> => {
-    return {
-      perform(resolve) {
-        if(values.length) {
-          resolve(values.shift() as IteratorResult<T, TReturn>);
-        } else {
-          waiters.push(resolve);
-          return () => {
-            let index = waiters.indexOf(resolve);
-            if(index > -1) {
-              waiters.splice(index, 1);
-            }
-          };
+  let next = (): Operation<IteratorResult<T, TReturn>> => (task) => {
+    let { future, resolve } = createFuture<IteratorResult<T, TReturn>>();
+    if(values.length) {
+      resolve({ state: 'completed', value: values.shift() as IteratorResult<T, TReturn> });
+    } else {
+      let wait: Waiter<T, TReturn> = (value) => { resolve({ state: 'completed', value }) };
+      waiters.push(wait);
+      task.consume(() => {
+        let index = waiters.indexOf(wait);
+        if(index > -1) {
+          waiters.splice(index, 1);
         }
-      }
+      });
     }
+    return future;
   };
 
   let subscription = {
