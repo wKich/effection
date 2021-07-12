@@ -3,7 +3,5 @@
   YARN_VERSION = "1.22.4"
 
 [[redirects]]
-  force = true
-  status = 200
   from = "/*"
   to = "/abcdefg/:splat"
