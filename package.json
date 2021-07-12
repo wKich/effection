@@ -31,7 +31,8 @@
   "scripts": {
     "clean": "git clean -dxf",
     "postinstall": "patch-package",
-    "prepack": "yarn workspaces run prepack",
+    "prepack2": "yarn workspaces run prepack",
+    "prepack": "echo hello",
     "test": "yarn workspaces run test",
     "lint": "yarn workspaces run lint",
     "docs": "rm -rf docs/ && yarn typedoc --options typedoc.json",
